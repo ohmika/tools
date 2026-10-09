@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Tools Lite</title>
+	<style>		*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#17202a;font:14px system-ui}header{position:sticky;top:0;background:#17202a;color:#fff;padding:14px;z-index:2}h1{font-size:20px;margin:0 0 10px}input,textarea,button{font:inherit;border:1px solid #ccd3da;border-radius:7px;padding:9px;background:#fff}#search{width:100%}main{max-width:1200px;margin:auto;padding:15px}.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.cats button.active{background:#17202a;color:#fff}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:9px}.card{background:#fff;border:1px solid #dde2e6;border-radius:9px;padding:12px}.card b{display:block;margin-bottom:5px}.card small{color:#68737d}.card button{width:100%;margin-top:9px}.panel{display:none;background:#fff;border:1px solid #ccd3da;border-radius:10px;padding:14px;margin-bottom:14px}.panel.show{display:block}.io{display:grid;grid-template-columns:1fr 1fr;gap:10px}.io textarea,.out{width:100%;min-height:220px}.out{white-space:pre-wrap;word-break:break-word;background:#f7f8fa;border:1px solid #dde2e6;border-radius:7px;padding:10px;overflow:auto}.controls{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}@media(max-width:700px){.io{grid-template-columns:1fr}}
+	</style>
+</head>
+<body>
+<header>
+	<h1>
+		Tools Lite
+	</h1>
+	<input id="search" placeholder="Search a tool&hellip;">
+</header>
+<main>
+<div id="panel" class="panel">
+</div>
+<div id="cats" class="cats">
+</div>
+<div id="count">
+</div>
+<div id="grid" class="grid">
+</div>
+</main><script>
+	const E=new TextEncoder(),D=new TextDecoder();
+	const enc=s=>encodeURIComponent(s),dec=s=>decodeURIComponent(s),b64=s=>btoa(unescape(encodeURIComponent(s))),ub64=s=>decodeURIComponent(escape(atob(s))),lines=s=>s.split(/\r?\n/),rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+	async function hash(a,s){return [...new Uint8Array(await crypto.subtle.digest(a,E.encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('')}
+	function json(s,p){return JSON.stringify(JSON.parse(s),null,p)}
+	function rev(s){return [...s].reverse().join('')}
+	function shuffle(s){let a=[...s];for(let i=a.length-1;i;i--){let j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a.join('')}
+	function tools(){let a=[],add=(cat,name,fn)=>a.push({cat,name,fn});
+	const T=(n,f)=>add('Text',n,f),W=(n,f)=>add('Web',n,f),C=(n,f)=>add('Encoding',n,f),M=(n,f)=>add('Math & Conversion',n,f),R=(n,f)=>add('Random',n,f),H=(n,f)=>add('Hash',n,f);
+	T('Uppercase',s=>s.toUpperCase());T('Lowercase',s=>s.toLowerCase());T('Title Case',s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()));T('Reverse Text',rev);T('Random Case',s=>[...s].map(c=>Math.random()<.5?c.toLowerCase():c.toUpperCase()).join(''));T('Remove Empty Lines',s=>lines(s).filter(x=>x.trim()).join('\n'));T('Remove Duplicate Lines',s=>[...new Set(lines(s))].join('\n'));T('Sort Lines',s=>lines(s).sort((a,b)=>a.localeCompare(b)).join('\n'));T('Reverse Lines',s=>lines(s).reverse().join('\n'));T('Shuffle Lines',s=>lines(s).sort(()=>Math.random()-.5).join('\n'));T('Trim Lines',s=>lines(s).map(x=>x.trim()).join('\n'));T('Remove Whitespace',s=>s.replace(/\s/g,''));T('Collapse Whitespace',s=>s.replace(/\s+/g,' ').trim());T('Remove Punctuation',s=>s.replace(/[\.,!?;:()[\]{}"'`~@#$%^&*_=+<>|\/\\-]/g,''));T('Remove Accents',s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,''));T('Count Characters',s=>String(s.length));T('Count Words',s=>String((s.trim().match(/\S+/g)||[]).length));T('Count Lines',s=>String(s?s.split(/\r?\n/).length:0));T('Extract Emails',s=>(s.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)||[]).join('\n'));T('Extract URLs',s=>(s.match(/https?:\/\/[^\s<>"']+/gi)||[]).join('\n'));T('Number Lines',s=>lines(s).map((x,i)=>i+1+' '+x).join('\n'));T('Text Info',s=>JSON.stringify({characters:s.length,words:(s.trim().match(/\S+/g)||[]).length,lines:lines(s).length},null,2));
+	W('URL Encode',enc);W('URL Decode',dec);W('URL Parse',s=>{try{let u=new URL(s);return JSON.stringify({protocol:u.protocol,host:u.host,path:u.pathname,query:u.search,hash:u.hash,origin:u.origin},null,2)}catch(e){return 'Invalid URL'}});W('HTML Escape',s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));W('HTML Unescape',s=>{let x=document.createElement('textarea');x.innerHTML=s;return x.value});W('HTML Strip Tags',s=>s.replace(/<[^>]*>/g,''));W('HTML Minify',s=>s.replace(/<!--[\s\S]*?-->/g,'').replace(/>\s+</g,'><').replace(/\s{2,}/g,' ').trim());W('JSON Prettify',s=>json(s,2));W('JSON Minify',s=>json(s));W('JSON Validate',s=>{try{JSON.parse(s);return 'Valid JSON ✓'}catch(e){return 'Invalid JSON: '+e.message}});W('CSS Minify',s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\s+/g,' ').replace(/\s*([{}:;,])\s*/g,'$1').trim());W('JavaScript Minify',s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|\s)\/\/.*$/gm,'$1').replace(/\s+/g,' ').trim());
+	C('Base64 Encode',b64);C('Base64 Decode',ub64);C('ROT13',s=>s.replace(/[A-Za-z]/g,c=>String.fromCharCode((c<='Z'?65:97)+(c.charCodeAt(0)-(c<='Z'?65:97)+13)%26)));C('ROT47',s=>[...s].map(c=>{let n=c.charCodeAt(0);return n>=33&&n<=126?String.fromCharCode(33+(n-33+47)%94):c}).join(''));C('Text to Binary',s=>[...E.encode(s)].map(x=>x.toString(2).padStart(8,'0')).join(' '));C('Binary to Text',s=>D.decode(Uint8Array.from(s.trim().split(/\s+/).map(x=>parseInt(x,2)))));C('Text to Hex',s=>[...E.encode(s)].map(x=>x.toString(16).padStart(2,'0')).join(''));C('Hex to Text',s=>D.decode(Uint8Array.from(s.replace(/\s/g,'').match(/.{1,2}/g)||[],x=>parseInt(x,16))));C('Text to ASCII',s=>[...s].map(x=>x.charCodeAt(0)).join(' '));C('ASCII to Text',s=>s.trim().split(/[,\s]+/).map(Number).map(x=>String.fromCharCode(x)).join(''));C('Morse Encode',s=>{let m={a:'.-',b:'-...',c:'-.-.',d:'-..',e:'.',f:'..-.',g:'--.',h:'....',i:'..',j:'.---',k:'-.-',l:'.-..',m:'--',n:'-.',o:'---',p:'.--.',q:'--.-',r:'.-.',s:'...',t:'-',u:'..-',v:'...-',w:'.--',x:'-..-',y:'-.--',z:'--..'};return s.toLowerCase().split(' ').map(w=>[...w].map(c=>m[c]||c).join(' ')).join(' / ')});
+	H('SHA-1',s=>hash('SHA-1',s));H('SHA-256',s=>hash('SHA-256',s));H('SHA-384',s=>hash('SHA-384',s));H('SHA-512',s=>hash('SHA-512',s));
+	M('Binary to Decimal',s=>String(parseInt(s,2)));M('Decimal to Binary',s=>Number(s).toString(2));M('Decimal to Hex',s=>Number(s).toString(16).toUpperCase());M('Hex to Decimal',s=>String(parseInt(s,16)));M('Hex to Binary',s=>parseInt(s,16).toString(2));M('Octal to Decimal',s=>String(parseInt(s,8)));M('Decimal to Octal',s=>Number(s).toString(8));M('Celsius to Fahrenheit',s=>String(Number(s)*9/5+32));M('Fahrenheit to Celsius',s=>String((Number(s)-32)*5/9));M('Kilometers to Miles',s=>String(Number(s)/1.609344));M('Miles to Kilometers',s=>String(Number(s)*1.609344));M('Kilograms to Pounds',s=>String(Number(s)/.45359237));M('Pounds to Kilograms',s=>String(Number(s)*.45359237));M('Degrees to Radians',s=>String(Number(s)*Math.PI/180));M('Radians to Degrees',s=>String(Number(s)*180/Math.PI));M('Unix to UTC',s=>new Date(Number(s)*1000).toISOString());M('UTC to Unix',s=>String(Math.floor(new Date(s).getTime()/1000)));M('IP to Decimal',s=>s.split('.').reduce((n,x)=>(n*256+Number(x))>>>0,0).toString());M('Decimal to IP',s=>{let n=Number(s)>>>0;return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.')});M('Seconds to H:M:S',s=>{let n=Number(s),h=Math.floor(n/3600),m=Math.floor(n%3600/60),q=Math.floor(n%60);return h+':'+String(m).padStart(2,'0')+':'+String(q).padStart(2,'0')});M('H:M:S to Seconds',s=>{let a=s.split(':').map(Number);return String((a[0]||0)*3600+(a[1]||0)*60+(a[2]||0))});
+	R('Random String',()=>Array.from(crypto.getRandomValues(new Uint32Array(20)),x=>'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[x%62]).join(''));R('Random Number',()=>String(rnd(0,1000000)));R('Random UUID',()=>crypto.randomUUID());R('Random Hex',()=>[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join(''));R('Random IP',()=>[1,2,3,4].map(()=>rnd(0,255)).join('.'));R('Random MAC',()=>[...crypto.getRandomValues(new Uint8Array(6))].map(x=>x.toString(16).padStart(2,'0')).join(':'));R('Random Choice',s=>{let a=lines(s).filter(Boolean);return a.length?a[rnd(0,a.length-1)]:''});R('Random Binary',()=>rnd(0,1048575).toString(2));
+	return a}
+	const ts=tools(),cats=['All',...new Set(ts.map(x=>x.cat))],$=id=>document.getElementById(id);let active='All';function render(){let q=$('search').value.toLowerCase();$('cats').innerHTML='';cats.forEach(c=>{let b=document.createElement('button');b.textContent=c;b.className=c===active?'active':'';b.type='button';b.addEventListener('click',()=>{active=c;render()});$('cats').appendChild(b)});let a=ts.filter(x=>(active==='All'||x.cat===active)&&x.name.toLowerCase().includes(q));$('count').textContent=a.length+' tools';$('grid').innerHTML='';a.forEach(x=>{let card=document.createElement('div');card.className='card';let title=document.createElement('b');title.textContent=x.name;let cat=document.createElement('small');cat.textContent=x.cat;let b=document.createElement('button');b.textContent='Open';b.type='button';b.addEventListener('click',()=>openTool(ts.indexOf(x)));card.append(title,cat,b);$('grid').appendChild(card)})}
+	function openTool(i){
+	const t=ts[i],p=$('panel');
+	p.className='panel show';
+	p.innerHTML='<h2></h2><div class="io"><textarea id="inp" placeholder="Enter text or data…"></textarea><div id="out" class="out"></div></div><div class="controls"><button type="button" id="run">Run</button><button type="button" id="clr">Clear</button><button type="button" id="cpy">Copy</button></div>';
+	p.querySelector('h2').textContent=t.name;
+	$('run').addEventListener('click',()=>runTool(i));
+	$('clr').addEventListener('click',()=>{$('inp').value='';$('out').textContent=''});
+	$('cpy').addEventListener('click',copyOut);
+	window.scrollTo({top:0,behavior:'smooth'})
+}
+async function runTool(i){
+	try{$('out').textContent=await ts[i].fn($('inp').value)}
+	catch(e){$('out').textContent='Error: '+e.message}
+}
+async function copyOut(){
+	const txt=$('out').textContent,b=$('cpy');
+	try{
+		await navigator.clipboard.writeText(txt)
+	}catch(e){
+		const ta=document.createElement('textarea');
+		ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+		document.body.appendChild(ta);ta.select();
+		try{document.execCommand('copy')}catch(_){}
+		ta.remove()
+	}
+	b.textContent='Copied ✓';
+	setTimeout(()=>b.textContent='Copy',1200)
+}
+$('search').oninput=render;render();
+</script>
+</body>
+</html>
